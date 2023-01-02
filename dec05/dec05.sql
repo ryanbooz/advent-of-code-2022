@@ -6,6 +6,8 @@ create table dec05 (
 -- COPY the text into the appropriate columns
 \COPY dec05 (puzzle_input) FROM input_05.txt NULL '';
 
+select * from dec05;
+
 -- Just starting to work out how to take the
 -- first few lines and create the arrays out of it
 select  array[
@@ -79,19 +81,20 @@ game as (
 	-- I know that's where the ID starts in the rows. Could
 	-- clean up with a row_number() call in the previous CTE
 	select 11 id, 0 boxes, 0 src, 0 dest, s stack_state
-	from stacks
+	from stacks	
 	union all
 	select id+1, m.boxes, m.src, m.dest, g.stack_state
 	from game
 		join moves m using (id)
 	cross join lateral ( 
 		select array_agg(si)
-		from (select 'state' grp, case 
-			when o = m.dest then
+		from (
+			select 'state' grp, 
+			case when o = m.dest then
 				-- notice that we reference the array here because this
 				-- isn't a true table that we can move around in at this point
-				(select reverse(substr(stack_state[m.src],1,m.boxes))) || i  --star 1
-				-- (select substr(stack_state[m.src],1,m.boxes)) || i  --star 2
+				--(select reverse(substr(stack_state[m.src],1,m.boxes))) || i  --star 1
+				(select substr(stack_state[m.src],1,m.boxes)) || i  --star 2
 			when o = m.src THEN 
 				substr(i,m.boxes+1)
 			else i end si

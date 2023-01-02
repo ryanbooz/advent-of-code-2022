@@ -6,6 +6,8 @@ create table dec06 (
 -- COPY the text into the appropriate columns
 \COPY dec06 (signal) FROM input_06.txt NULL '';
 
+select * from dec06;
+
 -- Star 1
 with recursive test as (
 	select signal from dec06
