@@ -90,8 +90,8 @@ SELECT * FROM mnest;
  * to see if any other trees are taller. If not, they are
  * "visible"
  */
-SET jit=ON;
-EXPLAIN analyze
+--SET jit=ON;
+--EXPLAIN analyze
 with s as (select a from (values
 ('30373'),
 ('25512'),
@@ -110,27 +110,18 @@ trees AS (
     CROSS JOIN string_to_table(a, NULL) WITH ORDINALITY AS t (tree, o)
 )
 --select * from trees;
---,
--- This was to dynamically tell where the edges were. Not needed with a better solution.
---maxh(x,y) as (
---	select 
---	(select x from trees order by x desc limit 1),
---	(select y from trees order by y desc limit 1)
---)
 select sum(visible) from (
-select m.x, m.y, tree, 
-	case when m.y = 1 or m.y = maxh.x then 1
-	when m.x = 1 or m.x = maxh.y then 1 
-	when tree > (select max(tree) from trees where x < m.x and y=m.y) then 1
-	when tree > (select max(tree) from trees where x > m.x and y = m.y) then 1
-	when tree > (select max(tree) from trees where y < m.y and x = m.x) then 1
-	when tree > (select max(tree) from trees where y > m.y and x = m.x) then 1
-	else 0 end visible
-from trees m
-CROSS JOIN LATERAL -- dynamically find LAST ROW AND LAST COLUMN FOR the INPUT DATA set
-	(select 
-	(select x from trees order by x desc limit 1),
-	(select y from trees order by y desc limit 1)) AS maxh(x,y)
+	select m.x, m.y, tree, 
+		case when m.y = maxh.miny or m.y = maxh.maxy then 1
+		when m.x = maxh.minx or m.x = maxh.maxx then 1  
+		when tree > (select max(tree) from trees where x < m.x and y=m.y) then 1
+		when tree > (select max(tree) from trees where x > m.x and y = m.y) then 1
+		when tree > (select max(tree) from trees where y < m.y and x = m.x) then 1
+		when tree > (select max(tree) from trees where y > m.y and x = m.x) then 1
+		else 0 end visible
+	from trees m
+	CROSS JOIN
+		(select min(x), max(x), min(y), max(y) FROM trees) AS maxh(minx, maxx, miny, maxy)
 ) j;
 
 
@@ -162,19 +153,17 @@ with trees (x, y, tree) AS (
     CROSS JOIN string_to_table(trees, NULL) WITH ORDINALITY AS t (tree, o)
 )
 select sum(visible) from (
-select m.x, m.y, tree, 
-	case when m.y = 1 or m.y = maxh.y then 1
-	when m.x = 1 or m.x = maxh.x then 1 
-	when tree > (select max(tree) from trees where x < m.x and y=m.y) then 1
-	when tree > (select max(tree) from trees where x > m.x and y = m.y) then 1
-	when tree > (select max(tree) from trees where y < m.y and x = m.x) then 1
-	when tree > (select max(tree) from trees where y > m.y and x = m.x) then 1
-	else 0 end visible
-from trees m
-CROSS JOIN LATERAL -- dynamically find LAST ROW AND LAST COLUMN FOR the INPUT DATA set
-	(select 
-	(select x from trees order by x desc limit 1),
-	(select y from trees order by y desc limit 1)) AS maxh(x,y)
+	select m.x, m.y, tree, 
+		case when m.y = maxh.miny or m.y = maxh.maxy then 1
+		when m.x = maxh.minx or m.x = maxh.maxx then 1 
+		when tree > (select max(tree) from trees where x < m.x and y = m.y) then 1
+		when tree > (select max(tree) from trees where x > m.x and y = m.y) then 1
+		when tree > (select max(tree) from trees where y < m.y and x = m.x) then 1
+		when tree > (select max(tree) from trees where y > m.y and x = m.x) then 1
+		else 0 end visible
+	from trees m
+	CROSS JOIN
+		(select min(x), max(x), min(y), max(y) FROM trees) AS maxh(minx, maxx, miny, maxy)
 ) j;
 
 -- Does turning off JIT help here too?

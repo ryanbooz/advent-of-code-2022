@@ -8,6 +8,10 @@ create table dec07 (
 
 select * from dec07;
 
+
+/*****************************
+ * Star 1
+ *****************************/
 with recursive commands as (
 	select id,
 		regexp_match(file_system, '\$ cd (.*)') as dir,
@@ -46,7 +50,9 @@ from sizes
 where size < 100000;
 
 
-
+/*****************************
+ * Star 2
+ *****************************/
 with recursive commands as (
 	select id,
 		regexp_match(file_system, '\$ cd (.*)') as dir,
@@ -91,43 +97,4 @@ order by size;
 
 
 
-
-
-select sum(dir_total) from (
-	select dir, sum(fsize) dir_total from (
-		select distinct on (tt.dir, wt.file) tt.dir, wt.file, wt.fsize from walk_tree wt
-			join walk_tree tt on wt.dir[:cardinality(tt.dir)] = tt.dir
-			where 
-			wt.file is not null and tt.file is not null
-	) a
-	group by dir
-) b
-where dir_total < 100000;
-
-select dir, sum(fsize) dir_total from (
-		select distinct on (tt.dir, wt.file) tt.dir, wt.file, wt.fsize from walk_tree wt
-			join walk_tree tt on wt.dir[:cardinality(tt.dir)] = tt.dir
-			where 
-			wt.file is not null and tt.file is not null
-	) a
-	group by dir;
-
-select distinct on (tt.dir, wt.file) tt.dir, wt.file, wt.fsize from walk_tree wt
-	join walk_tree tt on wt.dir[:cardinality(tt.dir)] = tt.dir
-	where 
-	wt.file is not null and tt.file is not null
-
-
-select sum(dir_total) from (
-	select dir, sum(fsize) dir_total from (
-		select distinct on (tt.dir, wt.file) tt.dir, wt.file, wt.fsize from walk_tree wt
-			join walk_tree tt on wt.dir[:cardinality(tt.dir)] = tt.dir
-			where 
-			wt.file is not null and tt.file is not null
-	) a
-	group by dir
-) b
-where dir_total < 100000;
-
-select * from walk_tree;
 
